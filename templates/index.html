@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expiry & Brand Detection</title>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #c9ebce;
+      color: #333;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .header {
+      margin-bottom: 20px;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      color: #1d4ed8;
+      margin-bottom: 10px;
+    }
+
+    .header p {
+      font-size: 1.2rem;
+      font-style: italic;
+      color: #555;
+    }
+
+    .upload-section {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      margin-top: 20px;
+    }
+
+    .upload-section input {
+      display: block;
+      width: 100%;
+      margin-top: 10px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    .button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .button-primary {
+      background-color: #22c55e;
+      color: white;
+    }
+
+    .button-primary:hover {
+      background-color: #16a34a;
+    }
+
+    .loading {
+      margin-top: 10px;
+      color: #888;
+      font-size: 1rem;
+    }
+
+    .results {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      margin-top: 20px;
+    }
+
+    .results h2 {
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+    }
+
+    .results ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .results ul li {
+      font-size: 1rem;
+      margin-bottom: 5px;
+    }
+
+    .features {
+      margin-top: 40px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+    }
+
+    .feature {
+      background: linear-gradient(to top right, #d9f99d, #6ee7b7);
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      transition: transform 0.3s;
+    }
+
+    .feature:hover {
+      transform: scale(1.05);
+    }
+
+    .feature h3 {
+      font-size: 1.25rem;
+      margin-bottom: 10px;
+      color: #374151;
+    }
+
+    .feature p {
+      font-size: 0.9rem;
+      color: #4b5563;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header Section -->
+    <div class="header">
+      <h1>Expiry Detection</h1>
+      <p>"Leverage AI to detect expiration dates quickly and accurately."</p>
+    </div>
+
+    <!-- Image Upload Section -->
+    <div class="upload-section">
+      <label for="front-upload">Upload Front Image</label>
+      <input type="file" id="front-upload" onchange="handleImageUpload(event, 'front')" />
+      <p id="front-file" style="margin-top: 10px; color: #555;"></p>
+
+      <label for="back-upload" style="margin-top: 20px;">Upload Back Image</label>
+      <input type="file" id="back-upload" onchange="handleImageUpload(event, 'back')" />
+      <p id="back-file" style="margin-top: 10px; color: #555;"></p>
+    </div>
+
+    <!-- Submit Button -->
+    <button id="analyze-button" class="button button-primary" onclick="handleSubmit()">Submit for Expiry & Brand Detection</button>
+
+    <!-- Results Section -->
+    <div id="results" class="results" style="display: none;">
+      <h2>Detection Results</h2>
+      <ul id="results-list"></ul>
+    </div>
+
+    <!-- Download Excel Button -->
+    <button id="download-button" class="button" style="margin-top: 20px;" onclick="handleDownloadExcel()">Download Excel</button>
+
+    <!-- Features Section -->
+    <div class="features">
+        <div class="feature">
+          <h3>Automated Detection</h3>
+          <p>Quickly identify expiry dates using advanced image processing.
+        </p>
+        </div>
+        <div class="feature">
+          <h3>High Accuracy</h3>
+          <p>Ensure precise detection of expiry dates for better inventory
+            management.</p>
+        </div>
+        <div class="feature">
+          <h3>User-Friendly Interface</h3>
+          <p>Simple and intuitive interface for easy image uploads and results.</p>
+        </div>
+       
+      </div>
+  </div>
+
+  <script>
+    let frontImage = null;
+    let backImage = null;
+
+    function handleImageUpload(event, type) {
+      const file = event.target.files[0];
+      if (type === "front") {
+        frontImage = file;
+        document.getElementById('front-file').textContent = `Selected File: ${file.name}`;
+      } else if (type === "back") {
+        backImage = file;
+        document.getElementById('back-file').textContent = `Selected File: ${file.name}`;
+      }
+    }
+
+    async function handleSubmit() {
+      if (!frontImage || !backImage) {
+        alert("Please upload both front and back images.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("front_image", frontImage);
+      formData.append("back_image", backImage);
+
+      try {
+        const response = await fetch("http://localhost:5000/recognize-expiry-date", {
+          method: "POST",
+          body: formData
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Something went wrong");
+        }
+
+        const data = await response.json();
+        displayResults(data);
+      } catch (error) {
+        console.error("Error:", error);
+        alert("Failed to recognize expiry date. " + error.message);
+      }
+    }
+
+    function displayResults(data) {
+      const resultsList = document.getElementById("results-list");
+      resultsList.innerHTML = "";
+
+      if (data.brand_name) {
+        const brandItem = document.createElement("li");
+        brandItem.textContent = `Brand Name: ${data.brand_name}`;
+        resultsList.appendChild(brandItem);
+      }
+
+      if (data.expiry_date) {
+        const expiryItem = document.createElement("li");
+        expiryItem.textContent = `Expiry Date: ${data.expiry_date}`;
+        resultsList.appendChild(expiryItem);
+      }
+
+      document.getElementById("results").style.display = "block";
+    }
+
+    async function handleDownloadExcel() {
+      try {
+        const response = await fetch("http://localhost:5000/download-excel", {
+          method: "GET"
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to download the file.");
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "Expiry_Brand_Details.xlsx";
+        a.click();
+        window.URL.revokeObjectURL(url);
+      } catch (error) {
+        console.error("Error downloading file:", error);
+        alert("Failed to download the file. " + error.message);
+      }
+    }
+  </script>
+</body>
+</html>
