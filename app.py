@@ -12,6 +12,8 @@ import re
 from datetime import datetime
 import pandas as pd
 import os
+from urllib.parse import quote as url_quote
+
 
 app = Flask(__name__)
 CORS(app)
